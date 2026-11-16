@@ -30,7 +30,7 @@ extern "C" {
 
 ControllerPtr myControllers[GP_MAX_CONTROLLERS];
 
-bool pairingEnabled = true;
+bool pairingEnabled = false;
 uint32_t keysClearedUntilMs = 0;
 uint32_t lastSendUs = 0;
 uint32_t lastScanKickMs = 0;
@@ -51,6 +51,7 @@ uint32_t lastRumbleSentMs[GP_MAX_CONTROLLERS] = {0};
 
 // Registro de callback para executar comandos de scan na thread do BTstack
 static btstack_context_callback_registration_t s_scanCallbackReg;
+static btstack_context_callback_registration_t s_stopScanCallbackReg;
 
 // Cores de identificacao para controles com barra de luz RGB (PS4 / PS5)
 struct RgbColor { uint8_t r, g, b; };
@@ -77,6 +78,15 @@ static void forceBtScanOnMainThread(void* context) {
     uni_bt_le_scan_start();
 }
 
+static void stopBtScanOnMainThread(void* context) {
+    (void)context;
+    gap_inquiry_stop();
+    uni_bt_le_scan_stop();
+    gap_discoverable_control(0);
+    gap_connectable_control(1); // Mantem reconexao automatica de controles ja pareados
+    uni_bt_enable_new_connections_unsafe(false);
+}
+
 void kickBluetoothScan() {
     s_scanCallbackReg.callback = &forceBtScanOnMainThread;
     s_scanCallbackReg.context  = nullptr;
@@ -84,10 +94,18 @@ void kickBluetoothScan() {
     lastScanKickMs = millis();
 }
 
+void stopBluetoothScan() {
+    s_stopScanCallbackReg.callback = &stopBtScanOnMainThread;
+    s_stopScanCallbackReg.context  = nullptr;
+    btstack_run_loop_execute_on_main_thread(&s_stopScanCallbackReg);
+}
+
 void setPairingMode(bool enable) {
     pairingEnabled = enable;
     if (enable) {
         kickBluetoothScan();
+    } else {
+        stopBluetoothScan();
     }
 }
 
@@ -328,7 +346,7 @@ void setup() {
     BP32.setup(&onConnectedController, &onDisconnectedController);
     BP32.enableVirtualDevice(false);
 
-    setPairingMode(true);
+    setPairingMode(false);
 }
 
 void loop() {

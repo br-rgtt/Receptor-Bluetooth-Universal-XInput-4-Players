@@ -1,22 +1,26 @@
 // ============================================================================
-// Firmware 2: Interface USB Xbox 360 Dinamica (1 a 4 Controles) - RP2040-Zero
-// Stack USB: Adafruit TinyUSB + Driver XInput + MS OS 2.0 (XUSB10)
+// Firmware 2: Emulador Receptor Sem Fio Xbox 360 (045E:0719) - RP2040-Zero
+// Stack USB: Adafruit TinyUSB + Protocolo Xbox 360 Wireless Receiver
 // ============================================================================
 //
-// COMPORTAMENTO DINAMICO NA USB:
-//   - 0 ou 1 controle conectado no Bluetooth -> Aparece 1 Controle Xbox 360 no PC
-//   - 2 controles conectados no Bluetooth    -> Aparecem 2 Controles Xbox 360 no PC
-//   - 3 controles conectados no Bluetooth    -> Aparecem 3 Controles Xbox 360 no PC
-//   - 4 controles conectados no Bluetooth    -> Aparecem 4 Controles Xbox 360 no PC
+// FUNCIONAMENTO NO PC (WINDOWS / LINUX):
+//   - Ao plugar na USB: Aparece APENAS 1 controle no Windows (Slot 0).
+//   - Ao conectar o 1º controle Bluetooth no ESP32: Ele controla o Slot 0.
+//   - Ao conectar o 2º, 3º ou 4º controle Bluetooth no ESP32:
+//     O RP2040 envia o pacote de presenca [0x08, 0x80] no respectivo canal
+//     sem fio. O Windows adiciona o novo controle na hora SEM DESCONECTAR
+//     ou interromper os controles que ja estavam jogando!
+//   - Ao desligar um controle adicional: O RP2040 envia [0x08, 0x00] e o
+//     Windows remove apenas aquele controle.
 //
 // LED RGB INTEGRADO DO RP2040-ZERO (GP16):
-//   - Amarelo piscando : Sem sinal UART do ESP32 (verifique os fios TX/RX)
-//   - Azul piscando    : Modo de Pareamento ABERTO (mesmo com controles ja conectados!)
-//   - Verde fixo       : 1 Controle conectado
-//   - Ciano fixo       : 2 Controles conectados
-//   - Azul/Roxo fixo   : 3 Controles conectados
-//   - Branco/Ouro fixo : 4 Controles conectados
-//   - Roxo piscando    : Memoria de pareamento Bluetooth limpa (Reset BT)
+//   - Amarelo piscando : Sem comunicacao UART com o ESP32 (verifique GP0/GP1)
+//   - Roxo piscando    : Memoria de pareamento Bluetooth resetada
+//   - Azul piscando    : Modo de pareamento ABERTO para novos controles
+//   - Verde fixo       : 1 Controle Bluetooth conectado
+//   - Ciano fixo       : 2 Controles Bluetooth conectados
+//   - Azul/Roxo fixo   : 3 Controles Bluetooth conectados
+//   - Dourado/Amarelo  : 4 Controles Bluetooth conectados
 // ============================================================================
 
 #include <Arduino.h>
@@ -35,9 +39,6 @@
 // Timeout de seguranca: se ficar 200ms sem pacote do ESP32, zera os controles no PC
 #define UART_WATCHDOG_TIMEOUT_MS 200
 
-// Tempo de estabilizacao antes de alterar a quantidade de dispositivos USB (300 ms)
-#define USB_COUNT_DEBOUNCE_MS    300
-
 Adafruit_NeoPixel rgbLed(1, RP2040_NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 uint8_t rxBuf[sizeof(GamepadStatePacket)];
@@ -46,19 +47,16 @@ size_t  rxIndex = 0;
 GamepadStatePacket latestState[GP_MAX_CONTROLLERS];
 uint32_t lastUsbSendUs[GP_MAX_CONTROLLERS] = {0};
 
-uint8_t  connectedBtCount   = 0;
-bool     pairingOpen        = true;
-bool     keysCleared        = false;
-bool     hasValidPacket     = false;
-bool     neutralForced      = true;
-uint32_t lastValidPacketMs  = 0;
-uint32_t lastLedUpdateMs    = 0;
-
-uint8_t  pendingUsbCount    = 1;
-uint32_t pendingCountSinceMs = 0;
+uint8_t  connectedBtCount     = 0;
+bool     pairingOpen          = true;
+bool     keysCleared          = false;
+bool     hasValidPacket       = false;
+bool     neutralForced        = true;
+uint32_t lastValidPacketMs    = 0;
+uint32_t lastLedUpdateMs      = 0;
 
 // ----------------------------------------------------------------------------
-// Callback acionada quando o PC (Windows/Linux) envia Rumble ou Player LED
+// Callback acionada quando o Windows/Linux envia Rumble ou Player LED
 // para qualquer um dos 4 controles (playerIdx: 0..3)
 // ----------------------------------------------------------------------------
 void onPcFeedback(uint8_t playerIdx, uint8_t flags, uint8_t leftMotor, uint8_t rightMotor, uint8_t ledPattern) {
@@ -72,6 +70,34 @@ void onPcFeedback(uint8_t playerIdx, uint8_t flags, uint8_t leftMotor, uint8_t r
     fb.crc8       = gamepad_calc_crc8((const uint8_t*)&fb, sizeof(GamepadFeedbackPacket) - 1);
 
     Serial1.write((const uint8_t*)&fb, sizeof(GamepadFeedbackPacket));
+}
+
+// ----------------------------------------------------------------------------
+// Atualiza a presenca dos 4 slots no Receptor Sem Fio Xbox 360 (sem reset USB)
+// Regra:
+//   - Slot 0: sempre visivel quando conectado na USB (mostra 1 controle no PC)
+//   - Slots 1..3: visiveis SOMENTE quando o respectivo controle BT esta conectado
+// ----------------------------------------------------------------------------
+void syncWirelessPresence() {
+    if (!XInputUSB.mounted()) {
+        return;
+    }
+
+    // Slot 0 sempre presente ao plugar na USB
+    if (!XInputUSB.isSlotPresent(0)) {
+        XInputUSB.setSlotPresent(0, true);
+    }
+
+    // Slots 1..3 acompanham a quantidade real de controles conectados no ESP32
+    for (uint8_t i = 1; i < GP_MAX_CONTROLLERS; i++) {
+        bool shouldBePresent = hasValidPacket && (i < connectedBtCount);
+        if (XInputUSB.isSlotPresent(i) != shouldBePresent) {
+            if (!shouldBePresent) {
+                gamepad_init_neutral_state(&latestState[i], 0);
+            }
+            XInputUSB.setSlotPresent(i, shouldBePresent);
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -112,16 +138,19 @@ void pollEsp32Serial() {
                     neutralForced     = false;
                     lastValidPacketMs = millis();
 
+                    if (connectedBtCount == 0) {
+                        gamepad_init_neutral_state(&latestState[0], 0);
+                    }
+
+                    // Garante que o slot ja esteja anunciado no Receptor Wireless antes de enviar
+                    syncWirelessPresence();
+
                     if (playerIdx < GP_MAX_CONTROLLERS) {
                         memcpy(&latestState[playerIdx], pkt, sizeof(GamepadStatePacket));
 
-                        // Limpa slots acima de connectedBtCount caso algum controle tenha desconectado
-                        for (uint8_t i = (connectedBtCount == 0 ? 1 : connectedBtCount); i < GP_MAX_CONTROLLERS; i++) {
-                            gamepad_init_neutral_state(&latestState[i], 0);
-                        }
-
-                        // Envia imediatamente para o PC se o endpoint deste jogador estiver livre
-                        if (XInputUSB.ready(playerIdx)) {
+                        if (!XInputUSB.processControlPackets(playerIdx) &&
+                            XInputUSB.isSlotPresent(playerIdx) &&
+                            XInputUSB.ready(playerIdx)) {
                             XInputUSB.sendFromGamepadPacket(playerIdx, &latestState[playerIdx]);
                             lastUsbSendUs[playerIdx] = micros();
                         }
@@ -134,32 +163,7 @@ void pollEsp32Serial() {
 }
 
 // ----------------------------------------------------------------------------
-// Gerencia a adicao/remocao dinamica de controles na USB (1 a 4 dispositivos)
-// Regra: 0 ou 1 controle BT -> 1 dispositivo USB; 2..4 controles BT -> 2..4 USB
-// ----------------------------------------------------------------------------
-void manageDynamicUsbControllers() {
-    if (!hasValidPacket) return;
-
-    uint8_t desiredUsbCount = (connectedBtCount <= 1) ? 1 : connectedBtCount;
-    if (desiredUsbCount != pendingUsbCount) {
-        pendingUsbCount     = desiredUsbCount;
-        pendingCountSinceMs = millis();
-    }
-
-    if (pendingUsbCount != XInputUSB.getControllerCount()) {
-        if (millis() - pendingCountSinceMs >= USB_COUNT_DEBOUNCE_MS) {
-            XInputUSB.setControllerCount(pendingUsbCount);
-        }
-    }
-}
-
-// ----------------------------------------------------------------------------
 // Atualiza o LED RGB WS2812 do RP2040-Zero (GP16)
-// Prioridade:
-//   1. Sem UART -> Amarelo piscando
-//   2. Reset BT -> Roxo piscando rapido
-//   3. Modo Pareamento ABERTO -> Azul piscando (mesmo com controles conectados!)
-//   4. Controles Conectados (1..4) -> Cor fixa por quantidade de controles
 // ----------------------------------------------------------------------------
 void updateStatusRgbLed() {
     uint32_t now = millis();
@@ -183,7 +187,7 @@ void updateStatusRgbLed() {
         bool on = ((now / 350) % 2) == 0;
         rgbLed.setPixelColor(0, on ? rgbLed.Color(0, 15, 50) : 0);
     } else if (connectedBtCount >= 1) {
-        // Cor fixa indicando quantos controles estao conectados (1=Verde, 2=Ciano, 3=Roxo, 4=Ouro)
+        // Cor fixa indicando quantos controles estao conectados (1=Verde, 2=Ciano, 3=Roxo, 4=Dourado)
         if (connectedBtCount == 1) {
             rgbLed.setPixelColor(0, rgbLed.Color(0, 35, 0));
         } else if (connectedBtCount == 2) {
@@ -194,7 +198,7 @@ void updateStatusRgbLed() {
             rgbLed.setPixelColor(0, rgbLed.Color(35, 25, 0));
         }
     } else {
-        // 0 controles conectados e modo de pareamento fechado (clique no BOOT para abrir)
+        // 0 controles conectados e pareamento fechado
         rgbLed.setPixelColor(0, rgbLed.Color(15, 0, 0));
     }
 
@@ -220,32 +224,39 @@ void setup() {
     Serial1.setFIFOSize(256);
     Serial1.begin(GAMEPAD_UART_BAUD);
 
-    // Inicia com 1 controle Xbox 360 visivel na USB (mesmo com 0 controles conectados)
+    // Inicializa a USB como Xbox 360 Wireless Receiver (045E:0719)
     XInputUSB.setFeedbackCallback(onPcFeedback);
-    XInputUSB.begin(1);
+    XInputUSB.begin();
 }
 
 void loop() {
     // 1. Le pacotes de todos os controles ativos vindos do ESP32
     pollEsp32Serial();
 
-    // 2. Verifica se precisa adicionar/remover controles na USB (1 a 4)
-    manageDynamicUsbControllers();
+    // 2. Sincroniza presenca dos controles na USB sem resetar o barramento
+    syncWirelessPresence();
+
+    // 2.1 Processa pacotes pendentes de presenca / anuncio (0x08 / 0x0F / 0x13) para todos os slots
+    bool controlSent[GP_MAX_CONTROLLERS] = {false};
+    for (uint8_t i = 0; i < GP_MAX_CONTROLLERS; i++) {
+        controlSent[i] = XInputUSB.processControlPackets(i);
+    }
 
     uint32_t nowMs = millis();
     uint32_t nowUs = micros();
-    uint8_t usbCount = XInputUSB.getControllerCount();
 
-    // 3. Watchdog de seguranca ou polling USB a 1000 Hz para cada controle ativo
+    // 3. Watchdog de seguranca: se ficar sem UART por 200ms, zera o controle ativo
     if (hasValidPacket && (nowMs - lastValidPacketMs > UART_WATCHDOG_TIMEOUT_MS)) {
         if (!neutralForced) {
             bool allSent = true;
-            for (uint8_t i = 0; i < usbCount; i++) {
+            for (uint8_t i = 0; i < GP_MAX_CONTROLLERS; i++) {
                 gamepad_init_neutral_state(&latestState[i], 0);
-                if (XInputUSB.ready(i)) {
-                    XInputUSB.sendNeutral(i);
-                } else {
-                    allSent = false;
+                if (XInputUSB.isSlotPresent(i) && !controlSent[i]) {
+                    if (XInputUSB.ready(i)) {
+                        XInputUSB.sendNeutral(i);
+                    } else {
+                        allSent = false;
+                    }
                 }
             }
             if (allSent) {
@@ -253,8 +264,9 @@ void loop() {
             }
         }
     } else if (hasValidPacket) {
-        for (uint8_t i = 0; i < usbCount; i++) {
-            if (XInputUSB.ready(i) && (uint32_t)(nowUs - lastUsbSendUs[i]) >= 1000) {
+        // Envia periodicamente a 1000 Hz apenas para os slots atualmente presentes
+        for (uint8_t i = 0; i < GP_MAX_CONTROLLERS; i++) {
+            if (XInputUSB.isSlotPresent(i) && !controlSent[i] && XInputUSB.ready(i) && (uint32_t)(nowUs - lastUsbSendUs[i]) >= 1000) {
                 XInputUSB.sendFromGamepadPacket(i, &latestState[i]);
                 lastUsbSendUs[i] = nowUs;
             }

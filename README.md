@@ -1,6 +1,6 @@
 # Receptor Bluetooth Universal XInput (ESP32-WROOM + RP2040-Zero)
 
-Transforma um **ESP32-WROOM** + **Waveshare RP2040-Zero** em um receptor USB Bluetooth universal para até **4 controles sem fio simultâneos**, reconhecidos nativamente no **Windows** e no **Linux** como controles de **Xbox 360 (XInput)** a **1000 Hz** com suporte a **vibração (Rumble)** e **LEDs de jogador**.
+Transforma um **ESP32-WROOM** + **Waveshare RP2040-Zero** em um receptor USB Bluetooth universal para até **4 controles sem fio simultâneos**, reconhecidos nativamente no **Windows** e no **Linux** como um **Receptor Sem Fio Xbox 360 (`045E:0719`)** a **1000 Hz** com suporte a **vibração (Rumble)** e **LEDs de jogador**.
 
 Compatível com controles **Bluetooth Clássico (BR/EDR)** e **BLE**: PS4, PS5, Xbox Wireless, Nintendo Switch Pro, Joy-Cons, 8BitDo, GameSir e controles Bluetooth genéricos.
 
@@ -34,14 +34,14 @@ Não é necessário instalar Arduino IDE ou bibliotecas no Windows. Os scripts `
 
 ## Como Usar e Parear Controles
 
-- **Ao ligar (0 controles conectados):** O receptor inicia com o pareamento aberto (LED azul piscando). Basta colocar o 1º controle em modo de pareamento.
-- **Parear um 2º, 3º ou 4º controle (sem desconectar os atuais):**
-  1. Dê **1 clique curto no botão `BOOT`** do ESP32-WROOM (o LED azul voltará a piscar).
+- **Ao ligar:** O receptor inicia com o pareamento **fechado** (controles já pareados reconectam automaticamente ao serem ligados).
+- **Parear um controle novo (1º, 2º, 3º ou 4º) sem desconectar os atuais:**
+  1. Dê **1 clique curto no botão `BOOT`** do ESP32-WROOM (o LED azul começará a piscar).
   2. Coloque o novo controle em modo de pareamento. Assim que conectar, o modo de pareamento fecha automaticamente.
 - **Limpar todos os controles salvos:** Segure o botão **`BOOT`** do ESP32-WROOM por **3 segundos** (o LED piscará rápido).
-- **Enumeração Dinâmica na USB:**
-  - `0` ou `1` controle conectado → **1 controle Xbox 360** no PC.
-  - `2`, `3` ou `4` controles conectados → **2, 3 ou 4 controles Xbox 360** independentes na USB.
+- **Receptor Sem Fio Dinâmico (Zero Desconexões na USB):**
+  - Ao conectar na USB, apenas **1 controle** aparece inicialmente no Windows.
+  - Quando um 2º, 3º ou 4º controle conecta no Bluetooth, ele aparece dinamicamente no Windows pelo protocolo nativo do **Receptor Sem Fio Xbox 360 (`045E:0719`)** — **sem desconectar ou interromper** quem já está jogando!
 
 ### Status do LED RGB (`GP16` no RP2040-Zero)
 | Cor do LED | Significado |

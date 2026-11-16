@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 620" width="1120" height="620" font-family="'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+
+    <linearGradient id="espPcb" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1f242d"/>
+      <stop offset="100%" stop-color="#13171d"/>
+    </linearGradient>
+
+    <linearGradient id="rpPcb" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a4b78"/>
+      <stop offset="100%" stop-color="#063455"/>
+    </linearGradient>
+
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d0d7de"/>
+      <stop offset="50%" stop-color="#9aa4af"/>
+      <stop offset="100%" stop-color="#6e7781"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+
+    <filter id="wireGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1120" height="620" rx="16" fill="url(#bgGrad)"/>
+  <rect x="12" y="12" width="1096" height="596" rx="12" fill="none" stroke="#30363d" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="560" y="48" text-anchor="middle" fill="#f0f6fc" font-size="22" font-weight="700" letter-spacing="0.5">
+    DIAGRAMA DE LIGAÇÕES — RECEPTOR BLUETOOTH UNIVERSAL XINPUT (ATÉ 4 CONTROLES)
+  </text>
+  <text x="560" y="74" text-anchor="middle" fill="#8b949e" font-size="14">
+    ESP32-WROOM (Bluepad32 Receptor Bluetooth)  ⇄  UART 921600 bps (3.3V)  ⇄  Waveshare RP2040-Zero (USB Xbox 360 XInput)
+  </text>
+
+  <!-- ===================================================================== -->
+  <!-- BOARD 1: ESP32-WROOM-32 DEVKIT V1 (LEFT)                              -->
+  <!-- ===================================================================== -->
+  <g transform="translate(80, 110)" filter="url(#shadow)">
+    <!-- PCB Body -->
+    <rect x="0" y="0" width="300" height="430" rx="14" fill="url(#espPcb)" stroke="#3b434d" stroke-width="2.5"/>
+
+    <!-- Mounting Holes -->
+    <circle cx="18" cy="18" r="6" fill="#0d1117" stroke="#d29922" stroke-width="2.5"/>
+    <circle cx="282" cy="18" r="6" fill="#0d1117" stroke="#d29922" stroke-width="2.5"/>
+    <circle cx="18" cy="412" r="6" fill="#0d1117" stroke="#d29922" stroke-width="2.5"/>
+    <circle cx="282" cy="412" r="6" fill="#0d1117" stroke="#d29922" stroke-width="2.5"/>
+
+    <!-- PCB Antenna Area -->
+    <rect x="85" y="12" width="130" height="44" rx="4" fill="#11151c" stroke="#2d333b" stroke-width="1.5"/>
+    <path d="M102 46 V24 H116 V40 H130 V24 H144 V40 H158 V24 H172 V40 H188" fill="none" stroke="#d29922" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Metal RF Shield (ESP32-WROOM-32) -->
+    <rect x="78" y="56" width="144" height="128" rx="6" fill="url(#shieldGrad)" stroke="#57606a" stroke-width="2"/>
+    <text x="150" y="110" text-anchor="middle" fill="#1f2328" font-size="14" font-weight="800">ESP32-WROOM</text>
+    <text x="150" y="130" text-anchor="middle" fill="#24292f" font-size="11" font-weight="600">BT Classic + BLE</text>
+    <text x="150" y="148" text-anchor="middle" fill="#24292f" font-size="11" font-weight="700">Bluepad32</text>
+
+    <!-- Board Title Banner -->
+    <rect x="55" y="200" width="190" height="32" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+    <text x="150" y="221" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="700">ESP32 DevKit V1</text>
+
+    <!-- Onboard LED GPIO2 -->
+    <circle cx="205" cy="348" r="5" fill="#1f6feb" stroke="#79c0ff" stroke-width="1.5"/>
+    <text x="192" y="352" text-anchor="end" fill="#79c0ff" font-size="10" font-weight="600">LED (GPIO2)</text>
+
+    <!-- EN Button (Left) -->
+    <rect x="46" y="366" width="38" height="28" rx="4" fill="#8b949e" stroke="#30363d" stroke-width="1.5"/>
+    <circle cx="65" cy="380" r="8" fill="#24292f"/>
+    <text x="65" y="408" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="700">EN</text>
+
+    <!-- BOOT Button (Right - GPIO0) -->
+    <rect x="216" y="366" width="38" height="28" rx="4" fill="#8b949e" stroke="#58a6ff" stroke-width="1.5"/>
+    <circle cx="235" cy="380" r="8" fill="#1f6feb"/>
+    <text x="235" y="408" text-anchor="middle" fill="#58a6ff" font-size="10" font-weight="700">BOOT (Parear)</text>
+
+    <!-- Micro-USB Port (Bottom) -->
+    <rect x="115" y="398" width="70" height="36" rx="4" fill="#8b949e" stroke="#57606a" stroke-width="2"/>
+    <text x="150" y="420" text-anchor="middle" fill="#0d1117" font-size="10" font-weight="700">USB (Prog)</text>
+
+    <!-- Left Header Pins (Decorative + VIN/GND) -->
+    <!-- Pin VIN / 5V (Left bottom) -->
+    <g transform="translate(0, 320)">
+      <rect x="8" y="-11" width="78" height="22" rx="4" fill="#3d1518" stroke="#ff4d4d" stroke-width="1.5"/>
+      <circle cx="20" cy="0" r="5" fill="#d29922" stroke="#ff4d4d" stroke-width="2"/>
+      <text x="32" y="4" fill="#ffa198" font-size="12" font-weight="700">VIN / 5V</text>
+    </g>
+
+    <!-- Right Header Pins (Active Pins Highlighted) -->
+    <!-- GPIO 17 (TX2) -> y=230 -->
+    <g transform="translate(0, 250)">
+      <rect x="176" y="-12" width="116" height="24" rx="4" fill="#0d2d1a" stroke="#2ea043" stroke-width="1.5"/>
+      <text x="268" y="4" text-anchor="end" fill="#7ee787" font-size="12" font-weight="700">GPIO 17 (TX2)</text>
+      <circle cx="280" cy="0" r="5" fill="#d29922" stroke="#3fb950" stroke-width="2"/>
+    </g>
+
+    <!-- GPIO 16 (RX2) -> y=285 -->
+    <g transform="translate(0, 285)">
+      <rect x="176" y="-12" width="116" height="24" rx="4" fill="#0c2d48" stroke="#1f6feb" stroke-width="1.5"/>
+      <text x="268" y="4" text-anchor="end" fill="#79c0ff" font-size="12" font-weight="700">GPIO 16 (RX2)</text>
+      <circle cx="280" cy="0" r="5" fill="#d29922" stroke="#388bfd" stroke-width="2"/>
+    </g>
+
+    <!-- GND -> y=320 -->
+    <g transform="translate(0, 320)">
+      <rect x="200" y="-12" width="92" height="24" rx="4" fill="#21262d" stroke="#8b949e" stroke-width="1.5"/>
+      <text x="268" y="4" text-anchor="end" fill="#e6edf3" font-size="12" font-weight="700">GND</text>
+      <circle cx="280" cy="0" r="5" fill="#d29922" stroke="#8b949e" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- BOARD 2: WAVESHARE RP2040-ZERO (RIGHT)                                -->
+  <!-- ===================================================================== -->
+  <g transform="translate(720, 150)" filter="url(#shadow)">
+    <!-- PCB Body -->
+    <rect x="0" y="0" width="260" height="350" rx="14" fill="url(#rpPcb)" stroke="#1f6feb" stroke-width="2.5"/>
+
+    <!-- USB-C Port (Top -> Connects to PC) -->
+    <rect x="85" y="-18" width="90" height="34" rx="8" fill="#c9d1d9" stroke="#6e7681" stroke-width="2"/>
+    <text x="130" y="3" text-anchor="middle" fill="#0d1117" font-size="11" font-weight="800">USB-C (PC)</text>
+
+    <!-- RP2040 MCU Chip (Center) -->
+    <rect x="75" y="115" width="110" height="110" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    <text x="130" y="158" text-anchor="middle" fill="#f0f6fc" font-size="15" font-weight="800">RP2040-Zero</text>
+    <text x="130" y="178" text-anchor="middle" fill="#79c0ff" font-size="11" font-weight="600">TinyUSB XInput</text>
+    <text x="130" y="196" text-anchor="middle" fill="#7ee787" font-size="11" font-weight="700">Xbox 360 (1-4P)</text>
+
+    <!-- WS2812 RGB LED (GP16) -->
+    <rect x="116" y="246" width="28" height="28" rx="4" fill="#f0f6fc" stroke="#d29922" stroke-width="2"/>
+    <circle cx="130" cy="260" r="8" fill="#3fb950"/>
+    <text x="130" y="290" text-anchor="middle" fill="#a5d6ff" font-size="11" font-weight="700">LED RGB (GP16)</text>
+
+    <!-- BOOT & RESET Buttons -->
+    <rect x="52" y="52" width="44" height="24" rx="4" fill="#d0d7de" stroke="#484f58" stroke-width="1.5"/>
+    <text x="74" y="68" text-anchor="middle" fill="#0d1117" font-size="10" font-weight="800">BOOT</text>
+
+    <rect x="164" y="52" width="44" height="24" rx="4" fill="#d0d7de" stroke="#484f58" stroke-width="1.5"/>
+    <text x="186" y="68" text-anchor="middle" fill="#0d1117" font-size="10" font-weight="800">RESET</text>
+
+    <!-- Left Header Pins (GP0 TX, GP1 RX) -->
+    <!-- GP0 (UART0 TX) -> y=210 (screen y = 150+210 = 360) -->
+    <g transform="translate(0, 210)">
+      <rect x="8" y="-12" width="112" height="24" rx="4" fill="#0c2d48" stroke="#1f6feb" stroke-width="1.5"/>
+      <circle cx="20" cy="0" r="5" fill="#d29922" stroke="#388bfd" stroke-width="2"/>
+      <text x="32" y="4" fill="#79c0ff" font-size="12" font-weight="700">GP0 (TX)</text>
+    </g>
+
+    <!-- GP1 (UART0 RX) -> y=175 (screen y = 150+175 = 325) -->
+    <g transform="translate(0, 175)">
+      <rect x="8" y="-12" width="112" height="24" rx="4" fill="#0d2d1a" stroke="#2ea043" stroke-width="1.5"/>
+      <circle cx="20" cy="0" r="5" fill="#d29922" stroke="#3fb950" stroke-width="2"/>
+      <text x="32" y="4" fill="#7ee787" font-size="12" font-weight="700">GP1 (RX)</text>
+    </g>
+
+    <!-- Right Header Pins (5V, GND) -->
+    <!-- 5V -> y=60 -->
+    <g transform="translate(0, 105)">
+      <rect x="150" y="-12" width="102" height="24" rx="4" fill="#3d1518" stroke="#ff4d4d" stroke-width="1.5"/>
+      <text x="228" y="4" text-anchor="end" fill="#ffa198" font-size="12" font-weight="700">5V (VBUS)</text>
+      <circle cx="240" cy="0" r="5" fill="#d29922" stroke="#ff4d4d" stroke-width="2"/>
+    </g>
+
+    <!-- GND -> y=140 -->
+    <g transform="translate(0, 140)">
+      <rect x="150" y="-12" width="102" height="24" rx="4" fill="#21262d" stroke="#8b949e" stroke-width="1.5"/>
+      <text x="228" y="4" text-anchor="end" fill="#e6edf3" font-size="12" font-weight="700">GND</text>
+      <circle cx="240" cy="0" r="5" fill="#d29922" stroke="#8b949e" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- USB Cable to PC Indicator (Top Right) -->
+  <path d="M 850 132 V 95 H 1045" fill="none" stroke="#a5d6ff" stroke-width="4" stroke-dasharray="6 4"/>
+  <rect x="965" y="76" width="125" height="34" rx="8" fill="#1f6feb" stroke="#79c0ff" stroke-width="1.5"/>
+  <text x="1027" y="98" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700">USB → PC / Linux</text>
+
+  <!-- ===================================================================== -->
+  <!-- 4 WIRES CONNECTING ESP32-WROOM <-> RP2040-ZERO                        -->
+  <!-- ===================================================================== -->
+  <!-- Coordinates reference:
+       ESP32 VIN/5V   : (100, 430)
+       ESP32 GPIO 17  : (360, 360)
+       ESP32 GPIO 16  : (360, 395)
+       ESP32 GND      : (360, 430)
+
+       RP2040 GP1 (RX): (740, 325)
+       RP2040 GP0 (TX): (740, 360)
+       RP2040 5V      : (960, 255)
+       RP2040 GND     : (960, 290)
+  -->
+
+  <g filter="url(#wireGlow)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- WIRE 1: 5V (RED) from RP2040 5V (960, 255) around bottom to ESP32 VIN/5V (100, 430) -->
+    <path d="M 100 430 H 45 V 565 H 1030 V 255 H 960" stroke="#ff4d4d" stroke-width="5"/>
+
+    <!-- WIRE 2: GND (GRAY/WHITE) from ESP32 GND (360, 430) to RP2040 GND (960, 290) -->
+    <path d="M 360 430 H 580 V 530 H 1005 V 290 H 960" stroke="#8b949e" stroke-width="5"/>
+
+    <!-- WIRE 3: ESP32 GPIO 17 (TX2) (360, 360) -> RP2040 GP1 (RX) (740, 325) (GREEN) -->
+    <path d="M 360 360 H 510 V 325 H 740" stroke="#3fb950" stroke-width="5"/>
+
+    <!-- WIRE 4: ESP32 GPIO 16 (RX2) (360, 395) -> RP2040 GP0 (TX) (740, 360) (BLUE) -->
+    <path d="M 360 395 H 545 V 360 H 740" stroke="#388bfd" stroke-width="5"/>
+  </g>
+
+  <!-- Wire Labels in Center -->
+  <g transform="translate(425, 165)">
+    <rect x="0" y="0" width="250" height="126" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <text x="125" y="24" text-anchor="middle" fill="#f0f6fc" font-size="12" font-weight="700">RESUMO DOS 4 FIOS (3.3V NATIVO)</text>
+
+    <line x1="16" y1="44" x2="44" y2="44" stroke="#ff4d4d" stroke-width="4" stroke-linecap="round"/>
+    <text x="54" y="48" fill="#ffa198" font-size="12" font-weight="600">5V (RP2040) → VIN / 5V (ESP32)</text>
+
+    <line x1="16" y1="66" x2="44" y2="66" stroke="#8b949e" stroke-width="4" stroke-linecap="round"/>
+    <text x="54" y="70" fill="#e6edf3" font-size="12" font-weight="600">GND (RP2040) → GND (ESP32)</text>
+
+    <line x1="16" y1="88" x2="44" y2="88" stroke="#3fb950" stroke-width="4" stroke-linecap="round"/>
+    <text x="54" y="92" fill="#7ee787" font-size="12" font-weight="600">GPIO 17 (TX2) → GP1 (RX)</text>
+
+    <line x1="16" y1="110" x2="44" y2="110" stroke="#388bfd" stroke-width="4" stroke-linecap="round"/>
+    <text x="54" y="114" fill="#79c0ff" font-size="12" font-weight="600">GPIO 16 (RX2) → GP0 (TX)</text>
+  </g>
+
+  <!-- Direction Badges on UART lines -->
+  <rect x="442" y="313" width="145" height="22" rx="5" fill="#0d2d1a" stroke="#2ea043" stroke-width="1"/>
+  <text x="514" y="328" text-anchor="middle" fill="#7ee787" font-size="11" font-weight="700">Comandos (Controles →) </text>
+
+  <rect x="520" y="382" width="145" height="22" rx="5" fill="#0c2d48" stroke="#1f6feb" stroke-width="1"/>
+  <text x="592" y="397" text-anchor="middle" fill="#79c0ff" font-size="11" font-weight="700">(← Vibração / LEDs)</text>
+
+  <rect x="415" y="553" width="250" height="22" rx="5" fill="#3d1518" stroke="#ff4d4d" stroke-width="1"/>
+  <text x="540" y="568" text-anchor="middle" fill="#ffa198" font-size="11" font-weight="700">Alimentação 5V da USB do PC (1 único cabo)</text>
+</svg>

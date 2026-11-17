@@ -40,8 +40,8 @@ Não é necessário instalar Arduino IDE ou bibliotecas no Windows. Os scripts `
   2. Coloque o novo controle em modo de pareamento. Assim que conectar, o modo de pareamento fecha automaticamente.
 - **Limpar todos os controles salvos:** Segure o botão **`BOOT`** do ESP32-WROOM por **3 segundos** (o LED piscará rápido).
 - **Receptor Sem Fio Dinâmico (Zero Desconexões na USB):**
-  - Ao conectar na USB, apenas **1 controle** aparece inicialmente no Windows.
-  - Quando um 2º, 3º ou 4º controle conecta no Bluetooth, ele aparece dinamicamente no Windows pelo protocolo nativo do **Receptor Sem Fio Xbox 360 (`045E:0719`)** — **sem desconectar ou interromper** quem já está jogando!
+  - Ao conectar na USB sem nenhum controle Bluetooth ligado, **nenhum controle** aparece no `joy.cpl` (apenas o receptor).
+  - Conforme o 1º, 2º, 3º ou 4º controle conecta no Bluetooth, ele aparece dinamicamente no Windows pelo protocolo nativo do **Receptor Sem Fio Xbox 360 (`045E:0719`)** — **sem desconectar ou interromper** quem já está jogando!
 
 ### Status do LED RGB (`GP16` no RP2040-Zero)
 | Cor do LED | Significado |

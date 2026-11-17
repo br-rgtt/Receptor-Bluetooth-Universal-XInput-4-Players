@@ -2,6 +2,16 @@
 
 Todas as mudanças notáveis deste projeto estão documentadas neste arquivo.
 
+## [v1.1.1] - 2026-11-17
+
+### Alterado
+- **Presença 100% dinâmica no Windows (`joy.cpl`) para todos os 4 slots (`rp2040_xinput_usb.ino`):**
+  - Removida a exibição fixa do Slot 0 ao plugar na USB.
+  - Agora, com **0 controles Bluetooth conectados**, **nenhum controle** aparece no `joy.cpl` (apenas o receptor no Gerenciador de Dispositivos).
+  - Cada controle (1º, 2º, 3º e 4º) só aparece no `joy.cpl` no momento em que é conectado ao ESP32 e desaparece automaticamente ao ser desligado, mantendo zero desconexões nos demais jogadores.
+
+---
+
 ## [v1.1.0] - 2026-11-16
 
 ### Adicionado

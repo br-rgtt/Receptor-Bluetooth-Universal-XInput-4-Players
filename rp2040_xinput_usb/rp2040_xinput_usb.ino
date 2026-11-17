@@ -4,14 +4,13 @@
 // ============================================================================
 //
 // FUNCIONAMENTO NO PC (WINDOWS / LINUX):
-//   - Ao plugar na USB: Aparece APENAS 1 controle no Windows (Slot 0).
-//   - Ao conectar o 1º controle Bluetooth no ESP32: Ele controla o Slot 0.
-//   - Ao conectar o 2º, 3º ou 4º controle Bluetooth no ESP32:
-//     O RP2040 envia o pacote de presenca [0x08, 0x80] no respectivo canal
-//     sem fio. O Windows adiciona o novo controle na hora SEM DESCONECTAR
+//   - Ao plugar na USB sem controles Bluetooth: Nenhum controle aparece no joy.cpl.
+//   - Ao conectar o 1º, 2º, 3º ou 4º controle Bluetooth no ESP32:
+//     O RP2040 envia o pacote de presenca [0x08, 0x80] + Announce no respectivo
+//     canal sem fio. O Windows adiciona o novo controle na hora SEM DESCONECTAR
 //     ou interromper os controles que ja estavam jogando!
-//   - Ao desligar um controle adicional: O RP2040 envia [0x08, 0x00] e o
-//     Windows remove apenas aquele controle.
+//   - Ao desligar qualquer controle: O RP2040 envia [0x08, 0x00] e o Windows
+//     remove apenas aquele controle do joy.cpl.
 //
 // LED RGB INTEGRADO DO RP2040-ZERO (GP16):
 //   - Amarelo piscando : Sem comunicacao UART com o ESP32 (verifique GP0/GP1)
@@ -75,21 +74,16 @@ void onPcFeedback(uint8_t playerIdx, uint8_t flags, uint8_t leftMotor, uint8_t r
 // ----------------------------------------------------------------------------
 // Atualiza a presenca dos 4 slots no Receptor Sem Fio Xbox 360 (sem reset USB)
 // Regra:
-//   - Slot 0: sempre visivel quando conectado na USB (mostra 1 controle no PC)
-//   - Slots 1..3: visiveis SOMENTE quando o respectivo controle BT esta conectado
+//   - Slots 0..3: visiveis no Windows SOMENTE quando o respectivo controle BT
+//     esta conectado no ESP32 (0 controles BT -> 0 controles no joy.cpl)
 // ----------------------------------------------------------------------------
 void syncWirelessPresence() {
     if (!XInputUSB.mounted()) {
         return;
     }
 
-    // Slot 0 sempre presente ao plugar na USB
-    if (!XInputUSB.isSlotPresent(0)) {
-        XInputUSB.setSlotPresent(0, true);
-    }
-
-    // Slots 1..3 acompanham a quantidade real de controles conectados no ESP32
-    for (uint8_t i = 1; i < GP_MAX_CONTROLLERS; i++) {
+    // Todos os slots (0..3) acompanham a quantidade real de controles conectados no ESP32
+    for (uint8_t i = 0; i < GP_MAX_CONTROLLERS; i++) {
         bool shouldBePresent = hasValidPacket && (i < connectedBtCount);
         if (XInputUSB.isSlotPresent(i) != shouldBePresent) {
             if (!shouldBePresent) {

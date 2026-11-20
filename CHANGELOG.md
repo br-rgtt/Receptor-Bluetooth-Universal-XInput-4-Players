@@ -2,6 +2,25 @@
 
 Todas as mudanças notáveis deste projeto estão documentadas neste arquivo.
 
+## [v1.2.0] - 2026-11-20
+
+### Adicionado
+- **Suporte dedicado ao ESP32-CAM (`esp32_cam_bt_receiver/`):**
+  - Nova versão independente do receptor Bluetooth Bluepad32 para placas **AI-Thinker ESP32-CAM** (com suporte a antena externa IPEX), preservando integralmente o firmware original do ESP32-WROOM.
+  - Mapeamento adaptado para evitar conflito com a PSRAM interna (`GPIO 16`/`17`): UART2 em **`GPIO 14` (RX)** e **`GPIO 15` (TX)**, botão de pareamento no **`GPIO 13`** e LED de status integrado no **`GPIO 33`** com lógica invertida (`LOW` = aceso).
+- **Scripts de compilação e gravação individuais:**
+  - `compile_esp32.bat` (ESP32-WROOM), `compile_esp32_cam.bat` (ESP32-CAM), `compile_rp2040.bat` (RP2040-Zero) e `flash_esp32_cam.bat`.
+  - `compile_all.bat` atualizado para compilar os 3 firmwares em sequência (`build/esp32/`, `build/esp32_cam/` e `build/rp2040/`).
+
+### Corrigido
+- **Conflito de hot-plug USB no Windows com o RP2040-Zero (`usb_xinput.cpp` e `rp2040_xinput_usb.ino`):**
+  - Adicionado bloqueio de exclusão mútua (`ScopedUsbLock` com `__usb_mutex`) em todas as chamadas TinyUSB feitas no `loop()`, eliminando condição de corrida com a interrupção `usb_task_irq()` do RP2040.
+  - Corrigido o tratamento de requisições Vendor IN desconhecidas em `tud_vendor_control_xfer_cb()` para retornar `STALL` (`false`) quando `wLength > 0`, seguindo estritamente a máquina de estados EP0 do USB 2.0.
+  - `XInputUSB.begin()` movido para o início do `setup()` com intervalo de `detach()` aumentado para `500 ms`, garantindo enumeração limpa como `045E:0719`.
+  - Taxa de polling dos endpoints de dados ajustada para **250 Hz (`4 ms`)**, padrão do receptor oficial da Microsoft, mantendo todos os 4 controles simultâneos estáveis sem bloquear outros dispositivos USB.
+
+---
+
 ## [v1.1.1] - 2026-11-17
 
 ### Alterado

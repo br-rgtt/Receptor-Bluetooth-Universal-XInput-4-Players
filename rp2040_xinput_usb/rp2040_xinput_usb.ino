@@ -207,6 +207,11 @@ void setup() {
         gamepad_init_neutral_state(&latestState[i], 0);
     }
 
+    // Inicializa a USB como Xbox 360 Wireless Receiver (045E:0719) imediatamente
+    // antes de qualquer outro periferico para evitar re-enumeracao no meio do boot
+    XInputUSB.setFeedbackCallback(onPcFeedback);
+    XInputUSB.begin();
+
     rgbLed.begin();
     rgbLed.setBrightness(80);
     rgbLed.setPixelColor(0, rgbLed.Color(0, 0, 30));
@@ -217,10 +222,6 @@ void setup() {
     Serial1.setRX(RP2040_UART_RX_PIN);
     Serial1.setFIFOSize(256);
     Serial1.begin(GAMEPAD_UART_BAUD);
-
-    // Inicializa a USB como Xbox 360 Wireless Receiver (045E:0719)
-    XInputUSB.setFeedbackCallback(onPcFeedback);
-    XInputUSB.begin();
 }
 
 void loop() {
@@ -258,9 +259,9 @@ void loop() {
             }
         }
     } else if (hasValidPacket) {
-        // Envia periodicamente a 1000 Hz apenas para os slots atualmente presentes
+        // Envia periodicamente a 250 Hz (4 ms) apenas para os slots atualmente presentes
         for (uint8_t i = 0; i < GP_MAX_CONTROLLERS; i++) {
-            if (XInputUSB.isSlotPresent(i) && !controlSent[i] && XInputUSB.ready(i) && (uint32_t)(nowUs - lastUsbSendUs[i]) >= 1000) {
+            if (XInputUSB.isSlotPresent(i) && !controlSent[i] && XInputUSB.ready(i) && (uint32_t)(nowUs - lastUsbSendUs[i]) >= 4000) {
                 XInputUSB.sendFromGamepadPacket(i, &latestState[i]);
                 lastUsbSendUs[i] = nowUs;
             }

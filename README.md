@@ -1,6 +1,6 @@
-# Receptor Bluetooth Universal XInput (ESP32-WROOM + RP2040-Zero)
+# Receptor Bluetooth Universal XInput (ESP32-WROOM / ESP32-CAM + RP2040-Zero)
 
-Transforma um **ESP32-WROOM** + **Waveshare RP2040-Zero** em um receptor USB Bluetooth universal para até **4 controles sem fio simultâneos**, reconhecidos nativamente no **Windows** e no **Linux** como um **Receptor Sem Fio Xbox 360 (`045E:0719`)** a **1000 Hz** com suporte a **vibração (Rumble)** e **LEDs de jogador**.
+Transforma um **ESP32-WROOM** (ou **ESP32-CAM** com antena externa) + **Waveshare RP2040-Zero** em um receptor USB Bluetooth universal para até **4 controles sem fio simultâneos**, reconhecidos nativamente no **Windows** e no **Linux** como um **Receptor Sem Fio Xbox 360 (`045E:0719`)** a **250 Hz** com suporte a **vibração (Rumble)** e **LEDs de jogador**.
 
 Compatível com controles **Bluetooth Clássico (BR/EDR)** e **BLE**: PS4, PS5, Xbox Wireless, Nintendo Switch Pro, Joy-Cons, 8BitDo, GameSir e controles Bluetooth genéricos.
 
@@ -12,12 +12,14 @@ As duas placas operam em **3.3V** e são interligadas diretamente por **4 fios**
 
 ![Diagrama de Ligações ESP32-WROOM + RP2040-Zero](docs/wiring_diagram.svg)
 
-| ESP32-WROOM | RP2040-Zero | Função |
-| :--- | :--- | :--- |
-| **`VIN` / `5V`** | **`5V`** | Alimentação 5V vinda da USB do RP2040-Zero |
-| **`GND`** | **`GND`** | Terra comum |
-| **`GPIO 17` (TX2)** | **`GP1` (RX)** | Comandos dos controles: ESP32 → RP2040 (`921600 bps`) |
-| **`GPIO 16` (RX2)** | **`GP0` (TX)** | Vibração (*Rumble*) e LEDs: RP2040 → ESP32 (`921600 bps`) |
+| ESP32-WROOM | ESP32-CAM | RP2040-Zero | Função |
+| :--- | :--- | :--- | :--- |
+| **`VIN` / `5V`** | **`5V`** | **`5V`** | Alimentação 5V vinda da USB do RP2040-Zero |
+| **`GND`** | **`GND`** | **`GND`** | Terra comum |
+| **`GPIO 17` (TX2)** | **`GPIO 15` (TX2)** | **`GP1` (RX)** | Comandos dos controles: ESP32 → RP2040 (`921600 bps`) |
+| **`GPIO 16` (RX2)** | **`GPIO 14` (RX2)** | **`GP0` (TX)** | Vibração (*Rumble*) e LEDs: RP2040 → ESP32 (`921600 bps`) |
+
+> **Notas para ESP32-CAM:** O botão de pareamento fica no **`GPIO 13`** (push-button para `GND`) e o LED de status utiliza o LED vermelho traseiro no **`GPIO 33`** (lógica invertida).
 
 ---
 
@@ -27,8 +29,10 @@ Não é necessário instalar Arduino IDE ou bibliotecas no Windows. Os scripts `
 
 1. **`setup_tools.bat`** — Baixa o `arduino-cli`, os cores do **ESP32 (Bluepad32)** e **RP2040**, aplica o patch de conexões simultâneas (`maxACL=7`) e instala as bibliotecas necessárias.
 2. **`flash_esp32.bat`** — Compila e grava o firmware receptor Bluetooth no **ESP32-WROOM** via porta COM.
-3. **`flash_rp2040.bat`** — Compila e grava o firmware USB XInput no **RP2040-Zero** (segure `BOOT` ao conectar o RP2040-Zero na USB para abrir a unidade `RPI-RP2`).
-4. **`compile_all.bat`** — Apenas compila ambos os firmwares em `build/esp32/` e `build/rp2040/`.
+3. **`flash_esp32_cam.bat`** — Compila e grava o firmware receptor Bluetooth no **ESP32-CAM** via conversor USB-Serial (lembre-se de conectar `IO0` ao `GND` durante a gravação).
+4. **`flash_rp2040.bat`** — Compila e grava o firmware USB XInput no **RP2040-Zero** (segure `BOOT` ao conectar o RP2040-Zero na USB para abrir a unidade `RPI-RP2`).
+5. **`compile_all.bat`** — Compila todos os 3 firmwares em `build/esp32/`, `build/esp32_cam/` e `build/rp2040/`.
+6. **`compile_esp32.bat` / `compile_esp32_cam.bat` / `compile_rp2040.bat`** — Compilação individual de cada placa.
 
 ---
 
@@ -59,15 +63,20 @@ Não é necessário instalar Arduino IDE ou bibliotecas no Windows. Os scripts `
 ## Estrutura do Projeto
 
 ```text
-├── docs/                  # Diagramas de ligação (JPG e SVG)
-├── esp32_bt_receiver/     # Firmware do ESP32-WROOM (Receptor Bluetooth Bluepad32)
-├── rp2040_xinput_usb/     # Firmware do RP2040-Zero (Dispositivo USB Xbox 360 XInput)
-├── shared/                # Protocolo binário UART com CRC8 compartilhado entre as placas
-├── setup_tools.bat        # Instalação portátil das ferramentas em tools/
-├── compile_all.bat        # Compilação completa dos dois firmwares
-├── flash_esp32.bat        # Gravação automática no ESP32-WROOM
-├── flash_rp2040.bat       # Gravação automática no RP2040-Zero
-└── monitor_esp32.bat      # Monitor serial de diagnóstico
+├── docs/                   # Diagramas de ligação (JPG e SVG)
+├── esp32_bt_receiver/      # Firmware do ESP32-WROOM (Receptor Bluetooth Bluepad32)
+├── esp32_cam_bt_receiver/  # Firmware do ESP32-CAM (Receptor Bluetooth Bluepad32)
+├── rp2040_xinput_usb/      # Firmware do RP2040-Zero (Dispositivo USB Xbox 360 XInput)
+├── shared/                 # Protocolo binário UART com CRC8 compartilhado entre as placas
+├── setup_tools.bat         # Instalação portátil das ferramentas em tools/
+├── compile_all.bat         # Compilação completa dos três firmwares
+├── compile_esp32.bat       # Compilação individual do ESP32-WROOM
+├── compile_esp32_cam.bat   # Compilação individual do ESP32-CAM
+├── compile_rp2040.bat      # Compilação individual do RP2040-Zero
+├── flash_esp32.bat         # Gravação automática no ESP32-WROOM
+├── flash_esp32_cam.bat     # Gravação automática no ESP32-CAM
+├── flash_rp2040.bat        # Gravação automática no RP2040-Zero
+└── monitor_esp32.bat       # Monitor serial de diagnóstico
 ```
 
 ---

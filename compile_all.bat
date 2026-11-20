@@ -3,7 +3,7 @@ setlocal EnableDelayedExpansion
 chcp 65001 >nul
 
 echo ============================================================================
-echo  COMPILACAO COMPLETA - ESP32-WROOM (Bluepad32) + RP2040-Zero (USB XInput)
+echo  COMPILACAO COMPLETA - ESP32-WROOM + ESP32-CAM + RP2040-Zero
 echo ============================================================================
 
 set "ROOT_DIR=%~dp0"
@@ -24,10 +24,11 @@ if not exist "%ARDUINO_CLI%" (
 )
 
 if not exist "%BUILD_DIR%\esp32" mkdir "%BUILD_DIR%\esp32"
+if not exist "%BUILD_DIR%\esp32_cam" mkdir "%BUILD_DIR%\esp32_cam"
 if not exist "%BUILD_DIR%\rp2040" mkdir "%BUILD_DIR%\rp2040"
 
 echo.
-echo [1/2] Compilando Firmware 1: ESP32-WROOM Receptor Bluetooth (Bluepad32)...
+echo [1/3] Compilando Firmware 1: ESP32-WROOM Receptor Bluetooth (Bluepad32)...
 "%ARDUINO_CLI%" --config-file "%ARDUINO_CONFIG%" compile ^
     --fqbn esp32-bluepad32:esp32:esp32 ^
     --output-dir "%BUILD_DIR%\esp32" ^
@@ -41,7 +42,21 @@ if errorlevel 1 (
 )
 
 echo.
-echo [2/2] Compilando Firmware 2: RP2040-Zero Emulador USB Xbox 360 (TinyUSB XInput)...
+echo [2/3] Compilando Firmware 2: ESP32-CAM Receptor Bluetooth (Bluepad32)...
+"%ARDUINO_CLI%" --config-file "%ARDUINO_CONFIG%" compile ^
+    --fqbn esp32-bluepad32:esp32:esp32cam ^
+    --output-dir "%BUILD_DIR%\esp32_cam" ^
+    "%ROOT_DIR%esp32_cam_bt_receiver"
+
+if errorlevel 1 (
+    echo.
+    echo [ERRO] Falha ao compilar o firmware do ESP32-CAM!
+    if "%1"=="" pause
+    exit /b 1
+)
+
+echo.
+echo [3/3] Compilando Firmware 3: RP2040-Zero Emulador USB Xbox 360 (TinyUSB XInput)...
 "%ARDUINO_CLI%" --config-file "%ARDUINO_CONFIG%" compile ^
     --fqbn rp2040:rp2040:waveshare_rp2040_zero:usbstack=tinyusb ^
     --output-dir "%BUILD_DIR%\rp2040" ^
@@ -56,8 +71,9 @@ if errorlevel 1 (
 
 echo.
 echo ============================================================================
-echo  SUCESSO! Ambos os firmwares foram compilados com sucesso:
+echo  SUCESSO! Todos os 3 firmwares foram compilados com sucesso:
 echo    - ESP32-WROOM : build\esp32\esp32_bt_receiver.ino.bin
+echo    - ESP32-CAM   : build\esp32_cam\esp32_cam_bt_receiver.ino.bin
 echo    - RP2040-Zero : build\rp2040\rp2040_xinput_usb.ino.uf2
 echo ============================================================================
 if "%1"=="" pause

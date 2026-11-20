@@ -2,6 +2,18 @@
 #include "device/usbd_pvt.h"
 #include <string.h>
 
+extern "C" {
+#include "pico/mutex.h"
+}
+extern mutex_t __usb_mutex;
+
+// Trava o mutex global do TinyUSB no RP2040 para evitar condicao de corrida
+// entre o loop() principal e a interrupcao usb_task_irq()
+struct ScopedUsbLock {
+    ScopedUsbLock()  { mutex_enter_blocking(&__usb_mutex); }
+    ~ScopedUsbLock() { mutex_exit(&__usb_mutex); }
+};
+
 #define XINPUT_W_DATA_DESC_LEN   43  // 9 + 20 + 7 + 7
 #define XINPUT_W_AUDIO_DESC_LEN  35  // 9 + 12 + 7 + 7
 
@@ -38,6 +50,11 @@ extern "C" bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_c
                 0x00, 0x00, 0x00, 0x00
             };
             return tud_control_xfer(rhport, request, (void*)capabilities, sizeof(capabilities));
+        }
+        // Requisicoes Vendor IN desconhecidas com wLength > 0 devem retornar STALL (false),
+        // nunca tud_control_status(), para nao violar a maquina de estados EP0 do USB 2.0
+        if (request->wLength > 0) {
+            return false;
         }
     }
 
@@ -213,8 +230,8 @@ uint16_t USBXInputWirelessDataInterface::getInterfaceDescriptor(uint8_t itfnum_d
         epOut,
         0x0C, 0x00, 0x0C, 0x01, 0x02, 0x08,
 
-        // Endpoint IN (7 bytes - 1ms / 1000Hz)
-        0x07, 0x05, epIn,  0x03, 0x20, 0x00, 0x01,
+        // Endpoint IN (7 bytes - 4ms / 250Hz, padrao do receptor oficial 045E:0719)
+        0x07, 0x05, epIn,  0x03, 0x20, 0x00, 0x04,
         // Endpoint OUT (7 bytes - Rumble & LEDs)
         0x07, 0x05, epOut, 0x03, 0x20, 0x00, 0x08
     };
@@ -265,7 +282,7 @@ USBXInputManager::USBXInputManager() {
 bool USBXInputManager::begin() {
     if (TinyUSBDevice.isInitialized()) {
         TinyUSBDevice.detach();
-        delay(150);
+        delay(500);
     }
 
     memset(s_epIn,  0, sizeof(s_epIn));
@@ -343,7 +360,12 @@ bool USBXInputManager::setSlotPresent(uint8_t playerIdx, bool present) {
 }
 
 bool USBXInputManager::processControlPackets(uint8_t playerIdx) {
-    if (playerIdx >= GP_MAX_CONTROLLERS || !tud_mounted()) {
+    if (playerIdx >= GP_MAX_CONTROLLERS) {
+        return false;
+    }
+
+    ScopedUsbLock lock;
+    if (!tud_mounted()) {
         return false;
     }
 
@@ -405,12 +427,18 @@ bool USBXInputManager::processControlPackets(uint8_t playerIdx) {
 
 bool USBXInputManager::ready(uint8_t playerIdx) {
     if (playerIdx >= GP_MAX_CONTROLLERS) return false;
+    ScopedUsbLock lock;
     uint8_t ep = s_epIn[playerIdx];
     return tud_mounted() && (ep != 0) && !usbd_edpt_busy(s_rhport, ep);
 }
 
 bool USBXInputManager::sendReport29(uint8_t playerIdx, const XInputWirelessReport29* report) {
-    if (playerIdx >= GP_MAX_CONTROLLERS || !tud_mounted()) {
+    if (playerIdx >= GP_MAX_CONTROLLERS) {
+        return false;
+    }
+
+    ScopedUsbLock lock;
+    if (!tud_mounted()) {
         return false;
     }
 
